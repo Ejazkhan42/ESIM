@@ -1,3 +1,14 @@
 
+<<<<<<< HEAD
 2023-07-19 04:18:19,207 - __main__ - INFO - Token value: Token not available!
 2023-07-19 04:18:21,905 - __main__ - INFO - Weather in Berlin: AdoptAPet
+=======
+2023-07-18 22:46:00,024 - __main__ - INFO - Token value: 
+2023-07-18 22:46:00,434 - __main__ - INFO - Weather in Berlin: AdoptAPet
+2023-07-18 22:54:01,842 - __main__ - INFO - Token value: 
+2023-07-18 22:54:02,267 - __main__ - INFO - Weather in Berlin: AdoptAPet
+2023-07-18 23:10:37,800 - __main__ - INFO - Token value: 
+2023-07-18 23:10:38,160 - __main__ - INFO - Weather in Berlin: AdoptAPet
+2023-07-18 23:22:43,133 - __main__ - INFO - Token value: 
+2023-07-18 23:22:43,996 - __main__ - INFO - Weather in Berlin: AdoptAPet
+>>>>>>> 151ff320aaf6b960d039a296b5485fb77091ebda
