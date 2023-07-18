@@ -1,34 +1,36 @@
-import logging
-import logging.handlers
-import os
-
 import requests
+from bs4 import BeautifulSoup
+import pandas as pd
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger_file_handler = logging.handlers.RotatingFileHandler(
-    "status.log",
-    maxBytes=1024 * 1024,
-    backupCount=1,
-    encoding="utf8",
-)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logger_file_handler.setFormatter(formatter)
-logger.addHandler(logger_file_handler)
+urls = [
+    "https://esimradar.com/esim-aland-islands/",
+    "https://esimradar.com/esim-albania/",
+    "https://esimradar.com/esim-andorra/",
+    "https://esimradar.com/esim-austria/",
+    "https://esimradar.com/esim-azores/",
+    "https://esimradar.com/esim-balearic-islands/",
+    "https://esimradar.com/esim-belarus/",
+    "https://esimradar.com/esim-belgium/"
+]
 
-try:
-    SOME_SECRET = os.environ["SOME_SECRET"]
-except KeyError:
-    SOME_SECRET = "Token not available!"
-    #logger.info("Token not available!")
-    #raise
+all_data = []
 
+for url in urls:
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+    table = soup.find("table")
+    rows = table.find_all("tr")
+    
+    data = []
+    for row in rows:
+        cols = row.find_all("td")
+        cols = [col.text.strip() for col in cols]
+        data.append(cols + [url])  # Append the URL as the last element of each row
+    
+    all_data.extend(data)
 
-if __name__ == "__main__":
-    logger.info(f"Token value: {SOME_SECRET}")
+# Create a pandas DataFrame from the scraped data
+df = pd.DataFrame(all_data, columns=["Provider", "eSIM Profile", "Data", "Validity", "Price/GB", "Price", "Phone Number", "Views"])
 
-    r = requests.get('https://api.publicapis.org/entries')
-    if r.status_code == 200:
-        data = r.json()
-        temperature = data["entries"][0]["API"]
-        logger.info(f'Weather in Berlin: {temperature}')
+# Save the DataFrame to a CSV file
+df.to_csv("table_data.csv", index=False)
