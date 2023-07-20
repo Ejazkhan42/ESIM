@@ -1,36 +1,55 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import re
 
-urls = [
-    "https://esimradar.com/esim-aland-islands/",
-    "https://esimradar.com/esim-albania/",
-    "https://esimradar.com/esim-andorra/",
-    "https://esimradar.com/esim-austria/",
-    "https://esimradar.com/esim-azores/",
-    "https://esimradar.com/esim-balearic-islands/",
-    "https://esimradar.com/esim-belarus/",
-    "https://esimradar.com/esim-belgium/"
-]
+def scrape_table_with_links(url):
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
 
-all_data = []
+            # Find the table with the desired data. You may need to inspect the website's HTML to get the table's specific attributes.
+            table = soup.find('table')  # Replace 'your-table-class' with the actual class of the table.
 
-for url in urls:
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, "html.parser")
-    table = soup.find("table")
-    rows = table.find_all("tr")
+            if table:
+                rows = table.find_all('tr')
+                data = []
+
+                for idx, row in enumerate(rows):
+                    if idx == 0 or idx == len(rows) - 1:  # Skip the first and last row
+                        continue
+
+                    # Extract the text content from each cell in the row
+                    cells = row.find_all(['td', 'th'])
+                    row_data = [cell.get_text(strip=True) for cell in cells]
+
+                    # Extract the href links if they exist in the row
+                    links = row.find_all('a', href=re.compile(r'^https?://'))  # Regex to match absolute URLs
+                    href_links = [link['href'] for link in links]
+
+                    # Combine the row data and href links into a single list
+                    row_data.extend(href_links)
+
+                    data.append(row_data)
+
+                return data
+            else:
+                print("Table not found on the page.")
+        else:
+            print(f"Failed to fetch the page. Status code: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
     
-    data = []
-    for row in rows:
-        cols = row.find_all("td")
-        cols = [col.text.strip() for col in cols]
-        data.append(cols + [url])  # Append the URL as the last element of each row
-    
-    all_data.extend(data)
+    return None
 
-# Create a pandas DataFrame from the scraped data
-df = pd.DataFrame(all_data, columns=["Provider", "eSIM Profile", "Data", "Validity", "Price/GB", "Price", "Phone Number", "Views"])
-
-# Save the DataFrame to a CSV file
-df.to_csv("table_data.csv", index=False)
+table_url = 'https://esimradar.com/esim-aland-islands/'
+scraped_data = scrape_table_with_links(table_url)
+data=[]
+if scraped_data:
+    for row in scraped_data:
+        data.append(row)
+else:
+    print("Scraping failed.")
+df=pd.DataFrame(data)
+df.to_csv('data.csv')
