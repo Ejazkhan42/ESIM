@@ -47,9 +47,18 @@ table_url = 'https://esimradar.com/esim-aland-islands/'
 scraped_data = scrape_table_with_links(table_url)
 data=[]
 if scraped_data:
-    for row in scraped_data:
-        data.append(row)
+    # Load the existing CSV data (if any)
+    try:
+        existing_data = pd.read_csv('data.csv')
+    except FileNotFoundError:
+        existing_data = pd.DataFrame()
+
+    # Combine the existing data with the new scraped data
+    new_data = pd.DataFrame(scraped_data)
+    combined_data = pd.concat([existing_data, new_data], ignore_index=True)
+
+    # Save the combined data to the 'data.csv' file
+    combined_data.to_csv('data.csv', index=False)
+    print("Data updated and saved successfully.")
 else:
     print("Scraping failed.")
-df=pd.DataFrame(data)
-df.to_csv('data.csv')
