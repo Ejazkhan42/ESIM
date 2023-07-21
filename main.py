@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import re
-
+data = []
 def scrape_table_with_links(url):
     try:
         response = requests.get(url)
@@ -14,25 +14,19 @@ def scrape_table_with_links(url):
 
             if table:
                 rows = table.find_all('tr')
-                data = []
-
-                for idx, row in enumerate(rows):
-                    if idx == 0 or idx == len(rows) - 1:  # Skip the first and last row
-                        continue
-
-                    # Extract the text content from each cell in the row
-                    cells = row.find_all(['td', 'th'])
-                    row_data = [cell.get_text(strip=True) for cell in cells]
-
-                    # Extract the href links if they exist in the row
-                    links = row.find_all('a', href=re.compile(r'^https?://'))  # Regex to match absolute URLs
-                    href_links = [link['href'] for link in links]
-
-                    # Combine the row data and href links into a single list
-                    row_data.extend(href_links)
-
-                    data.append(row_data)
-
+                for r in range(1,len(rows)-1):
+                    eSimProvider=rows[r].find_all('td')[0].find('picture').find('source')['srcset']
+                    eSimProfile=rows[r].find_all('td')[1].text
+                    eSimData=rows[r].find_all('td')[2].text
+                    eSimValidity=rows[r].find_all('td')[3].text
+                    eSimPriceGB=rows[r].find_all('td')[4].text
+                    eSimPrice=rows[r].find_all('td')[5].text
+                    eSimPhoneNumber=rows[r].find_all('td')[6].text
+                    eSimCountry=rows[r].find_all('td')[7].text
+                    eSimViews=rows[r].find_all('td')[8].find('a')['href']
+                    ESIM={"Provder":eSimProvider,"eSIM Profile":eSimProfile,"Data":eSimData,"Validity":eSimValidity,
+                          "Price/GB":eSimPriceGB,"Price":eSimPrice,"PhoneNumber":eSimPhoneNumber,"Country":eSimCountry,"View_Detail":eSimViews,}
+                    data.append(ESIM)
                 return data
             else:
                 print("Table not found on the page.")
@@ -43,22 +37,28 @@ def scrape_table_with_links(url):
     
     return None
 
+def combine_csv_files(file1, file2, output_file):
+    df1 = pd.read_csv(file1)  # Read the first CSV file
+    df2 = pd.DataFrame(file2)  # Read the second CSV file
+
+    combined_df = pd.concat([df1, df2], ignore_index=True)  # Combine the two DataFrames
+
+    combined_df.to_csv(output_file,index=False)  # Save the combined DataFrame to a new CSV file
+
+
+
+
 table_url = 'https://esimradar.com/esim-aland-islands/'
 scraped_data = scrape_table_with_links(table_url)
-data=[]
-if scraped_data:
-    # Load the existing CSV data (if any)
+if data:
     try:
-        existing_data = pd.read_csv('data.csv')
+        file1 ='data.csv'
+        output_file='data.csv'
+        combine_csv_files(file1, data, output_file)
+        print("Data updated and saved successfully.")
     except FileNotFoundError:
-        existing_data = pd.DataFrame()
-
-    # Combine the existing data with the new scraped data
-    new_data = pd.DataFrame(scraped_data)
-    combined_data = pd.concat([existing_data, new_data], ignore_index=True)
-
-    # Save the combined data to the 'data.csv' file
-    combined_data.to_csv('data.csv', index=False)
-    print("Data updated and saved successfully.")
+        df=pd.DataFrame(data)
+        df.to_csv('data.csv',index=False)
+        print("Datasaved successfully.")
 else:
-    print("Scraping failed.")
+     print("Scraping failed.")
